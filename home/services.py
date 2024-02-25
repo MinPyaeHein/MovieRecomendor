@@ -17,7 +17,7 @@ class MyService:
 
         # Check if df is already loaded, if not, load it
         if MyService.df is None:
-            MyService.df = self.fetch_top_rated_movies(10)
+            MyService.df = self.fetch_top_rated_movies(100)
             MyService.df_original = MyService.df
 
     # Initialize merged_df only if it's None
