@@ -5,6 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 class MyService:
     df = None
+    df_original = None
    
     def __init__(self, api_key):
         self.api_key = api_key
@@ -17,7 +18,7 @@ class MyService:
         # Check if df is already loaded, if not, load it
         if MyService.df is None:
             MyService.df = self.fetch_top_rated_movies(10)
-            print(MyService.df)
+            MyService.df_original = MyService.df
 
     # Initialize merged_df only if it's None
        
@@ -31,22 +32,31 @@ class MyService:
         all_titles = [str(t) for t in self.df['title'].tolist()]
         closest_match = process.extractOne(title, all_titles)
         return closest_match[0]
-    def get_recommendations(self,movie_title):
-        self.df['genre_ids'] = self.df['genre_ids'].apply(lambda x: ' '.join(map(str, x)))
-        self.df['content'] = self.df['genre_ids'] + ' ' + self.df['original_language'] + ' ' + self.df['release_date'].astype(str) + ' ' + self.df['vote_average'].astype(str) + ' ' + self.df['vote_count'].astype(str) + ' ' + self.df['popularity'].astype(str)
-        vectorizer = CountVectorizer()
-        content_matrix = vectorizer.fit_transform(self.df['content'])
-        cosine_sim = cosine_similarity(content_matrix, content_matrix)
+    def get_recommendations(self, movie_title, n_recommendations):
+        genres = set()
+        for genre_list in self.df['genre_ids']:
+            for genre in genre_list:
+                genres.add(genre)
+
+        for genre in genres:
+            self.df[genre] = self.df['genre_ids'].transform(lambda x: int(genre in x))
+
+        movie_genres = self.df.drop(columns=['id', 'original_language', 'original_title','title', 'overview', 'genre_ids', 'backdrop_path', 'popularity', 'poster_path', 'release_date', 'vote_average', 'vote_count', 'adult', 'video'])
+        
+        cosine_sim = cosine_similarity(movie_genres, movie_genres)
         title = self.movie_finder(movie_title)
         movie_idx = dict(zip(self.df['title'], list(self.df.index)))
         idx = movie_idx[title]
-    
+        
         sim_scores = list(enumerate(cosine_sim[idx]))
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-        sim_scores = sim_scores[1:11]  
+        sim_scores = sim_scores[1:n_recommendations]
+        
         movie_indices = [i[0] for i in sim_scores]
-        return self.df['title'].iloc[movie_indices]
-
+        
+        # Return a subset of self.df_original with 'title' and 'genre_ids' columns
+        recommendations_df = self.df_original.loc[movie_indices, ['title', 'genre_ids']]
+        return recommendations_df
     def fetch_top_rated_movies(self, num_pages=40):
         all_movies = []
 
