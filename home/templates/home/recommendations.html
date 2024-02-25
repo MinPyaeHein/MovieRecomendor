@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Recommendations</title>
+</head>
+<body>
+    <h1>Movie Recommendations</h1>
+    <form method="post" action="{% url 'recommend_movies' %}">
+        {% csrf_token %}
+        <label for="movie_name">Enter a movie name:</label>
+        <input type="text" id="movie_name" name="movie_name" required>
+        <button type="submit">Get Recommendations</button>
+    </form>
+
+    {% if recommended_movies %}
+        <h2>Recommended Movies:</h2>
+        <ul>
+            {% for movie in recommended_movies %}
+                <li>{{ movie }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
