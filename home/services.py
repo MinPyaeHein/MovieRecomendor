@@ -6,7 +6,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 class MyService:
     df = None
     df_original = None
-   
+    all_movies=[]
     def __init__(self, api_key):
         self.api_key = api_key
         self.url = 'https://api.themoviedb.org/3/movie/top_rated?language=en-US&page={}'
@@ -17,7 +17,7 @@ class MyService:
 
         # Check if df is already loaded, if not, load it
         if MyService.df is None:
-            MyService.df = self.fetch_top_rated_movies(100)
+            MyService.df = self.fetch_top_rated_movies(10)
             MyService.df_original = MyService.df
 
     # Initialize merged_df only if it's None
@@ -58,7 +58,7 @@ class MyService:
         recommendations_df = self.df_original.loc[movie_indices, ['title', 'genre_ids']]
         return recommendations_df
     def fetch_top_rated_movies(self, num_pages=40):
-        all_movies = []
+        print (f"Fetching top rated movies.....")
 
         for page in range(1, num_pages + 1):
             response = requests.get(self.url.format(page), headers=self.headers)
@@ -66,8 +66,10 @@ class MyService:
             if response.status_code == 200:
                 data = response.json()
                 movies = data.get('results', [])
-                all_movies.extend(movies)
+                self.all_movies.extend(movies)
             else:
                 print(f"Error on page {page}: {response.status_code}")
-
-        return pd.DataFrame(all_movies)
+            MyService.df=pd.DataFrame(self.all_movies)
+            MyService.df_original=pd.DataFrame(self.all_movies)
+            
+        return pd.DataFrame(self.all_movies)
