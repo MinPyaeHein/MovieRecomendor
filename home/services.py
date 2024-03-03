@@ -46,16 +46,12 @@ class MyService:
         cosine_sim = cosine_similarity(movie_genres, movie_genres)
         title = self.movie_finder(movie_title)
         movie_idx = dict(zip(self.df['title'], list(self.df.index)))
-        idx = movie_idx[title]
-        
+        idx = movie_idx[title]  
         sim_scores = list(enumerate(cosine_sim[idx]))
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
         sim_scores = sim_scores[1:n_recommendations]
-        
         movie_indices = [i[0] for i in sim_scores]
-        
-        # Return a subset of self.df_original with 'title' and 'genre_ids' columns
-        recommendations_df = self.df_original.loc[movie_indices, ['title', 'genre_ids']]
+        recommendations_df = self.df_original.loc[movie_indices, ['title', 'genre_ids','overview']]
         return recommendations_df
     def fetch_top_rated_movies(self, num_pages=40):
         print (f"Fetching top rated movies.....")
