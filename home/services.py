@@ -7,10 +7,18 @@ class MyService:
     df = None
     df_original = None
     all_movies=[]
+    genres=None
     def __init__(self, api_key):
         self.api_key = api_key
         self.url = 'https://api.themoviedb.org/3/movie/top_rated?language=en-US&page={}'
         self.headers = {
+            'Authorization': f'Bearer {api_key}',
+            'accept': 'application/json'
+        }
+       
+     
+        self.url_genre = 'https://api.themoviedb.org/3/genre/movie/list?language=en'
+        self.headers_genre= {
             'Authorization': f'Bearer {api_key}',
             'accept': 'application/json'
         }
@@ -42,7 +50,6 @@ class MyService:
             self.df[genre] = self.df['genre_ids'].transform(lambda x: int(genre in x))
 
         movie_genres = self.df.drop(columns=['id', 'original_language', 'original_title','title', 'overview', 'genre_ids', 'backdrop_path', 'popularity', 'poster_path', 'release_date', 'vote_average', 'vote_count', 'adult', 'video'])
-        
         cosine_sim = cosine_similarity(movie_genres, movie_genres)
         title = self.movie_finder(movie_title)
         movie_idx = dict(zip(self.df['title'], list(self.df.index)))
@@ -52,10 +59,22 @@ class MyService:
         sim_scores = sim_scores[1:n_recommendations]
         movie_indices = [i[0] for i in sim_scores]
         recommendations_df = self.df_original.loc[movie_indices, ['title', 'genre_ids','overview']]
+        genres_df=self.fetch_genres()
+        print(genres_df)
+        genre_mapping = dict(zip(genres_df['id'], genres_df['name']))
+
+# Function to map genre IDs to names
+        def map_genre_ids_to_names(genre_ids):
+           return [genre_mapping.get(genre_id, '') for genre_id in genre_ids]
+
+        # Apply the mapping to the 'genre_ids' column in recomendor_df
+        recommendations_df['genre_names'] = recommendations_df['genre_ids'].apply(map_genre_ids_to_names)
+        print(recommendations_df)
+        
         return recommendations_df
     def fetch_top_rated_movies(self, num_pages=40):
         print (f"Fetching top rated movies.....")
-
+     
         for page in range(1, num_pages + 1):
             response = requests.get(self.url.format(page), headers=self.headers)
 
@@ -69,3 +88,15 @@ class MyService:
             MyService.df_original=pd.DataFrame(self.all_movies)
             
         return pd.DataFrame(self.all_movies)
+    def fetch_genres(self):
+        print("Fetching top genres.....")
+        response = requests.get(self.url_genre, headers=self.headers_genre)
+
+        if response.status_code == 200:
+            data = response.json()
+            genres = data.get('genres', [])
+        else:
+            print(f"Error on page {response.status_code}")
+            genres = []
+
+        return pd.DataFrame(genres)
