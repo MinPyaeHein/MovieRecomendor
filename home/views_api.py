@@ -31,13 +31,29 @@ def recommend_movies_api(request):
     if request.method == 'POST':
         movie_name = request.data.get('movie_name')
         number = request.data.get('number')
+        
         if movie_name:
             my_service = request.my_service
-            num_mov=int(number)
-            recommended_movies = my_service.get_recommendations(movie_name,num_mov)
-            recommended_movies_list = recommended_movies.reset_index().to_dict(orient='records')
+            num_mov = int(number)
+            recommended_movies = my_service.get_recommendations(movie_name, num_mov)
+            
+            # Modify the structure of the recommended movies
+            recommended_movies_list = []
+            for _, movie_row in recommended_movies.iterrows():
+                
+                movie_data = {
+                    'id': movie_row['id'],
+                    'title': movie_row['title'],
+                    'genres': [
+                        {'genre_id': genre_id, 'genre_name': genre_name}
+                        for genre_id, genre_name in zip(movie_row['genre_ids'], movie_row['genre_names'])
+                    ],
+                    'overview': movie_row['overview']
+                }
+                recommended_movies_list.append(movie_data)
+            
             return Response({'recommended_movies': recommended_movies_list})
         else:
             return Response({'error': 'Please provide a movie name.'}, status=400)
     else:
-        return Response(status=405)  
+        return Response(status=405)

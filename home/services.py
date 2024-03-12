@@ -27,6 +27,9 @@ class MyService:
         if MyService.df is None:
             MyService.df = self.fetch_top_rated_movies(10)
             MyService.df_original = MyService.df
+        if MyService.genres is None:
+           MyService.genres=self.fetch_genres()
+           print("print from constructor",MyService.genres)
 
     # Initialize merged_df only if it's None
        
@@ -58,12 +61,9 @@ class MyService:
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
         sim_scores = sim_scores[1:n_recommendations]
         movie_indices = [i[0] for i in sim_scores]
-        recommendations_df = self.df_original.loc[movie_indices, ['title', 'genre_ids','overview']]
-        genres_df=self.fetch_genres()
-        print(genres_df)
-        genre_mapping = dict(zip(genres_df['id'], genres_df['name']))
-
-# Function to map genre IDs to names
+        recommendations_df = self.df_original.loc[movie_indices, ['id','title', 'genre_ids','overview']]
+     
+        genre_mapping = dict(zip(self.genres['id'], self.genres['name']))
         def map_genre_ids_to_names(genre_ids):
            return [genre_mapping.get(genre_id, '') for genre_id in genre_ids]
 
