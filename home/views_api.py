@@ -45,7 +45,7 @@ def recommend_movies_api(request):
                     'id': movie_row['id'],
                     'title': movie_row['title'],
                     'genres': [
-                        {'genre_id': genre_id, 'genre_name': genre_name}
+                        {'genre_id': genre_id, 'name': genre_name}
                         for genre_id, genre_name in zip(movie_row['genre_ids'], movie_row['genre_names'])
                     ],
                     'overview': movie_row['overview']
